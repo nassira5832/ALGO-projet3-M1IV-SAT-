@@ -62,7 +62,7 @@ bool trouver_solution(formule F, bool *sol_x1, bool *sol_x2, bool *sol_x3) {
 int main() {
     srand(time(NULL)); // Initialisation du générateur aléatoire
 
-    formule F = generer_Formule(3); // Génération de 3 clauses aléatoires
+    formule F = generer_Formule(3); 
     bool x1, x2, x3;
 
     if (trouver_solution(F, &x1, &x2, &x3)) {
@@ -74,6 +74,6 @@ int main() {
         printf("Pas de solution.\n");
     }
 
-    free(F.clauses); // Libération de la mémoire
+    free(F.clauses); 
     return 0;
 }
