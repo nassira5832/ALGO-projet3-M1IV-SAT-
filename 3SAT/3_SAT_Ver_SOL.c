@@ -42,14 +42,34 @@ bool verefier_sol (formule F , clause c ){
     }
     return true;
 }
-int main() {
-    formule F = generer_Formule(3);
-    clause solution = generer_clause();
-    if (verefier_sol(F, solution)){
-        printf("la solution donnée est correct");
-    }else{
-        printf("la solution donnée est fausse ");
+double complexite (int k  , double t2 , double t1 ){
+    double time=0; 
+    double T;
+    for (int i=1 ; i<=k ; i++){
+       time= time+(t2 - t1)/CLOCKS_PER_SEC;
     }
+    T=time/k;
+    return T ; 
+}
+int main() {
+    int start =2; 
+    int end = 50000; 
+    int step =2 ; 
+    int k=3000;
+    FILE *file=fopen("resultat_ver_sol.csv","w");
+    fprintf(file, "nbr_clauses,temps,memUsage\n");
+    while(start<end){
+     double t1= clock();
+     formule F = generer_Formule(start);
+     clause solution = generer_clause();
+     verefier_sol(F, solution);
+     double t2= clock();
+     double temps=complexite(k,t2,t1);
+     size_t memoire = sizeof(F) + (F.nbr_clauses * sizeof(clause));
+     fprintf(file,"%d,%f,%zu\n",start,temps , memoire);
+     start=start+step;
+    }
+    
     return 0 ; 
 }
  
