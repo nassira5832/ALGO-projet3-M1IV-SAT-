@@ -93,61 +93,59 @@ void free_formula(Formula *formula) {
 }
 
 // Fonction pour calculer le temps de complexité (en utilisant un simple calcul)
-double complexite (int k  , double t2 , double t1 ){
-    double time=0; 
-    double T;
-    for (int i=1 ; i<=k ; i++){
-       time= time+(t2 - t1)/CLOCKS_PER_SEC;
-    }
-    T=time/k;
-    return T ; 
+double complexite(int k, double t2, double t1) {
+    return (t2 - t1) / CLOCKS_PER_SEC; // Conversion en secondes
 }
 
 Formula generer_Formule(int num_clauses) {
     Formula formule;
     formule.num_clauses = num_clauses;
-    formule.num_vars = num_clauses * 2; 
+    formule.num_vars = rand() % 50 + 1; // Le nombre de variables varie de 1 à 50
 
     formule.clauses = malloc(formule.num_clauses * sizeof(Clause));
     
     for (int i = 0; i < formule.num_clauses; i++) {
-        formule.clauses[i].num_literals = 3; 
-        formule.clauses[i].literals = malloc(3 * sizeof(int));
+        formule.clauses[i].num_literals = rand() % 3 + 1; // Chaque clause a entre 1 et 3 littéraux
+        formule.clauses[i].literals = malloc(formule.clauses[i].num_literals * sizeof(int));
         
-        for (int j = 0; j < 3; j++) {
-            formule.clauses[i].literals[j] = rand() % 2 ? j + 1 : -(j + 1);
+        for (int j = 0; j < formule.clauses[i].num_literals; j++) {
+            formule.clauses[i].literals[j] = rand() % 2 ? j + 1 : -(j + 1); // Littéraux positifs ou négatifs
         }
     }
     return formule;
 }
 
 int main() {
-    srand(time(NULL)); 
+    srand(time(NULL)); // Initialisation du générateur aléatoire
+
     int start = 2;
-    int end = 50;
+    int end = 14;
     int Step = 2;
-    int k = 200;
+    int k = 20000;
 
-    FILE *F = fopen("resultatSAT_trv_Sol.csv", "w");
- 
-    fprintf(F, "nbr_clauses,temps,memUsage\n");
-
+    FILE *F = fopen("resultat3SAT_trv_Sol.csv", "w");
+    if (F == NULL) {
+        perror("Erreur d'ouverture du fichier");
+        return 1;
+    }
+    fprintf(F, "nbr_clauses,num_vars,num_literals,temps,memUsage\n");
 
     while (start < end) {
-        printf("%d",start);
+
         double t1 = clock(); // Début du chrono
-         
+
         Formula formule = generer_Formule(start);
         bool *assignment = malloc(formule.num_vars * sizeof(bool));
 
         bool result = solve_sat(&formule, assignment);
 
-        double t2 = clock(); 
+        double t2 = clock(); // Fin du chrono
         double temps = complexite(k, t2, t1);
 
         size_t memoire = formule.num_clauses * sizeof(Clause) + formule.num_clauses * 3 * sizeof(int); // Estimation de la mémoire utilisée
 
-        fprintf(F, "%d,%f,%zu\n", start, temps, memoire);
+        // Enregistrement des résultats dans le fichier CSV
+        fprintf(F, "%d,%d,%d,%f,%zu\n", formule.num_clauses, formule.num_vars, formule.clauses[0].num_literals, temps, memoire);
 
         free(assignment);
         free_formula(&formule);
