@@ -58,22 +58,54 @@ bool trouver_solution(formule F, bool *sol_x1, bool *sol_x2, bool *sol_x3) {
     }
     return false;
 }
-
+bool trouver_solution(formule F, bool *sol_x) {
+    int total_combinations = 1 << 3; // 2^3 = 8 combinaisons possibles
+    for (int i = 0; i < total_combinations; i++) {
+        bool valeurs[3] = {
+            (i & 1) != 0, // Bit 0
+            (i & 2) != 0, // Bit 1
+            (i & 4) != 0  // Bit 2
+        };
+        if (evaluer_formule(F, valeurs)) {
+            for (int j = 0; j < 3; j++) {
+                sol_x[j] = valeurs[j];
+            }
+            return true;
+        }
+    }
+    return false;
+}
+double complexite (int k  , double t2 , double t1 ){
+    double time=0; 
+    double T;
+    for (int i=1 ; i<=k ; i++){
+       time= time+(t2 - t1)/CLOCKS_PER_SEC;
+    }
+    T=time/k;
+    return T ; 
+}
 int main() {
     srand(time(NULL)); // Initialisation du générateur aléatoire
+    int start=2;
+    int end = 40000;
+    int Step =2 ; 
+    int k=20000; 
+    FILE *F = fopen("resultat3SAT_trv_Sol.csv", "w");
+    fprintf(F, "nbr_clauses,temps,memUsage\n");
+   
 
-    formule F = generer_Formule(3); 
-    bool x1, x2, x3;
+    while (start<end){
 
-    if (trouver_solution(F, &x1, &x2, &x3)) {
-        printf("Solution trouvée : x1=%s, x2=%s, x3=%s\n",
-               x1 ? "true" : "false",
-               x2 ? "true" : "false",
-               x3 ? "true" : "false");
-    } else {
-        printf("Pas de solution.\n");
-    }
-
-    free(F.clauses); 
+        printf ("%d",start); 
+        double  t1= clock();
+        formule formule = generer_Formule(start); 
+        bool x1, x2, x3; 
+        free(formule.clauses);
+        double  t2= clock();
+        double temps = complexite(k,t2,t1);
+        size_t memoire = formule.nbr_clauses * sizeof(clause);
+        fprintf(F,"%d,%f,%zu\n",start,temps , memoire);
+        start=start+Step;
+    } 
     return 0;
 }
