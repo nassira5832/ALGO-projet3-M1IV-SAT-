@@ -58,23 +58,6 @@ bool trouver_solution(formule F, bool *sol_x1, bool *sol_x2, bool *sol_x3) {
     }
     return false;
 }
-bool trouver_solution(formule F, bool *sol_x) {
-    int total_combinations = 1 << 3; // 2^3 = 8 combinaisons possibles
-    for (int i = 0; i < total_combinations; i++) {
-        bool valeurs[3] = {
-            (i & 1) != 0, // Bit 0
-            (i & 2) != 0, // Bit 1
-            (i & 4) != 0  // Bit 2
-        };
-        if (evaluer_formule(F, valeurs)) {
-            for (int j = 0; j < 3; j++) {
-                sol_x[j] = valeurs[j];
-            }
-            return true;
-        }
-    }
-    return false;
-}
 double complexite (int k  , double t2 , double t1 ){
     double time=0; 
     double T;
@@ -94,12 +77,11 @@ int main() {
     fprintf(F, "nbr_clauses,temps,memUsage\n");
    
 
-    while (start<end){
-
-        printf ("%d",start); 
+    while (start<end){ 
         double  t1= clock();
         formule formule = generer_Formule(start); 
         bool x1, x2, x3; 
+        trouver_solution(formule, &x1, &x2, &x3);
         free(formule.clauses);
         double  t2= clock();
         double temps = complexite(k,t2,t1);
@@ -107,5 +89,6 @@ int main() {
         fprintf(F,"%d,%f,%zu\n",start,temps , memoire);
         start=start+Step;
     } 
+ 
     return 0;
 }
