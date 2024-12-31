@@ -1,18 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
-#define MAX_VARS 100
-#define MAX_CLAUSES 100
-#define MAX_LITERALS_PER_CLAUSE 100
+#include <time.h>
 
 typedef struct {
-    int literals[MAX_LITERALS_PER_CLAUSE];
+    int *literals;
     int num_literals;
 } Clause;
 
 typedef struct {
-    Clause clauses[MAX_CLAUSES];
+    Clause *clauses;
     int num_clauses;
     int num_vars;
 } Formula;
@@ -70,48 +67,80 @@ void print_formula(Formula* formula) {
     printf("\n");
 }
 
-int main() {
-    Formula formula;
-    bool assignment[MAX_VARS];
+double complexite (int k  , double t2 , double t1 ){
+    double time=0; 
+    double T;
+    for (int i=1 ; i<=k ; i++){
+       time= time+(t2 - t1)/CLOCKS_PER_SEC;
+    }
+    T=time/k;
+    return T ; 
+}
 
-    printf("Entrez le nombre de variables : ");
-    scanf("%d", &formula.num_vars);
-    printf("Entrez le nombre de clauses : ");
-    scanf("%d", &formula.num_clauses);
+Formula generer_Formule(int num_clauses) {
+    Formula formule;
+    formule.num_clauses = num_clauses;
+    formule.num_vars = rand() % 50 + 1; // Le nombre de variables varie de 1 à 50
 
-    for (int i = 0; i < formula.num_clauses; i++) {
-        printf("\nPour la clause %d:\n", i + 1);
-        printf("Entrez le nombre de littéraux : ");
-        scanf("%d", &formula.clauses[i].num_literals);
-
-        printf("Entrez les littéraux (nombre positif pour x, négatif pour ¬x) : ");
-        for (int j = 0; j < formula.clauses[i].num_literals; j++) {
-            scanf("%d", &formula.clauses[i].literals[j]);
+    formule.clauses = malloc(formule.num_clauses * sizeof(Clause));
+    
+    for (int i = 0; i < formule.num_clauses; i++) {
+        formule.clauses[i].num_literals = rand() % 3 + 1; // Chaque clause a entre 1 et 3 littéraux
+        formule.clauses[i].literals = malloc(formule.clauses[i].num_literals * sizeof(int));
+        
+        for (int j = 0; j < formule.clauses[i].num_literals; j++) {
+            formule.clauses[i].literals[j] = rand() % 2 ? j + 1 : -(j + 1); // Littéraux positifs ou négatifs
         }
     }
+    return formule;
+}
 
-    printf("\nEntrez la solution proposée (0 pour faux, 1 pour vrai) :\n");
-    for (int i = 0; i < formula.num_vars; i++) {
-        printf("x%d = ", i + 1);
-        int val;
-        scanf("%d", &val);
-        assignment[i] = (val != 0);
+
+void generer_solution(int num_vars, bool* solution) {
+    for (int i = 0; i < num_vars; i++) {
+        solution[i] = rand() % 2;  
+    }
+}
+
+int main() {
+    srand(time(NULL)); 
+
+    int start = 2000000;
+    int end = 4000000;
+    int Step = 2000;
+    int k =20000; 
+
+    FILE *F = fopen("resultatSAT_ver_Sol.csv", "w");
+
+    fprintf(F, "num_clauses,num_vars,num_literals,temps\n");
+
+    while (start < end) {
+        int num_clauses = start;  
+        Formula formula = generer_Formule(num_clauses);
+        bool assignment[100];
+
+        // Générer une solution aléatoire
+        generer_solution(formula.num_vars, assignment);
+
+        
+        double t1 = clock();
+        bool result = verify_solution(&formula, assignment);
+
+        double t2 = clock(); 
+        double temps = complexite(k, t2, t1); // Calcul du temps d'exécution
+
+        // Enregistrement des résultats dans le fichier CSV
+        fprintf(F, "%d,%d,%d,%f\n", num_clauses, formula.num_vars, formula.clauses->num_literals, temps);
+
+        // Libération de la mémoire allouée
+        for (int i = 0; i < formula.num_clauses; i++) {
+            free(formula.clauses[i].literals);
+        }
+        free(formula.clauses);
+
+        start = start + Step;  
     }
 
-    printf("\nVérification de la solution pour la formule :\n");
-    print_formula(&formula);
-
-    printf("\nSolution proposée :\n");
-    for (int i = 0; i < formula.num_vars; i++) {
-        printf("x%d = %s\n", i + 1, assignment[i] ? "vrai" : "faux");
-    }
-    
-    printf("\nRésultat de la vérification :\n");
-    if (verify_solution(&formula, assignment)) {
-        printf("La solution satisfait toutes les clauses!\n");
-    } else {
-        printf("La solution ne satisfait pas toutes les clauses!\n");
-    }
-
+    fclose(F);  
     return 0;
 }
