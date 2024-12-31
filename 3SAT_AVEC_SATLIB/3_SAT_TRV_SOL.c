@@ -110,7 +110,7 @@ int main() {
 
     struct dirent *entry;
     FILE *F = fopen("resultat3SAT_trv_Sol.csv", "w");
-    fprintf(F, "fichier,temps,memUsage\n");
+    fprintf(F, "nbr_clauses,temps,memUsage\n");
 
     // Parcourir tous les fichiers du dossier
     while ((entry = readdir(d)) != NULL) {
@@ -137,7 +137,7 @@ int main() {
         double t2 = clock();
         double temps = complexite(1, t2, t1); // Vous pouvez ajuster 'k' si nécessaire
         size_t memoire = Fm.num_clauses * sizeof(clause);
-        fprintf(F, "%s,%f,%zu\n", entry->d_name, temps, memoire);
+        fprintf(F, "%d,%f,%zu\n", Fm.num_clauses, temps, memoire);
     }
 
     fclose(F);
