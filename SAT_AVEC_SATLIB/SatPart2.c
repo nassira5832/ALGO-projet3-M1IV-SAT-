@@ -138,7 +138,7 @@ int main() {
         printf("Erreur d'ouverture du fichier CSV\n");
         return 1;
     }
-
+    int i =0 ; 
     fprintf(F, "nbr_clauses,num_vars,num_literals,temps,memUsage\n");
 
     while ((entry = readdir(d)) != NULL) {
@@ -167,7 +167,7 @@ int main() {
         
         // Enregistrement des résultats dans le fichier CSV
         fprintf(F, "%d,%d,%d,%f,%zu\n", formula.num_clauses, formula.num_vars, formula.clauses[0].num_literals, temps, memoire);
-
+        
         // Libération de la mémoire allouée
         for (int i = 0; i < formula.num_clauses; i++) {
             free(formula.clauses[i].literals);
