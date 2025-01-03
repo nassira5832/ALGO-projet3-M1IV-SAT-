@@ -99,7 +99,7 @@ double complexite(int k, double t2, double t1) {
 int main() {
     srand(time(NULL));  // Initialisation du générateur aléatoire
     int k = 200;
-    DIR *d = opendir("UUF75.325.100");
+    DIR *d = opendir("BMS_k3_n100_m429");
     if (d == NULL) {
         printf("Erreur d'ouverture du dossier\n");
         return 1;
@@ -113,7 +113,7 @@ int main() {
         if (entry->d_name[0] == '.') continue;  // Ignorer les fichiers cachés
 
         char filepath[256];
-        snprintf(filepath, sizeof(filepath), "UUF75.325.100/%s", entry->d_name);
+        snprintf(filepath, sizeof(filepath), "BMS_k3_n100_m429/%s", entry->d_name);
 
         double t1 = clock();
         formule Fm = lireCNF(filepath);
