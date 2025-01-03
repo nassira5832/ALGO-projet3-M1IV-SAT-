@@ -25,33 +25,48 @@ Formula lireCNF(const char *filename) {
 
     Formula F;
     char line[1024];
+    F.num_vars = 0;
+    F.num_clauses = 0;
+    F.clauses = NULL;
     
     while (fgets(line, sizeof(line), f)) {
-        // Ignorer les commentaires
         if (line[0] == 'c') continue;
 
-        // Lire la ligne de problème
         if (line[0] == 'p') {
             int num_variables, num_clauses;
             sscanf(line, "p cnf %d %d", &num_variables, &num_clauses);
             F.num_vars = num_variables;
             F.num_clauses = num_clauses;
             F.clauses = (Clause *)malloc(num_clauses * sizeof(Clause));
+            for (int i = 0; i < num_clauses; i++) {
+                F.clauses[i].literals = NULL;
+                F.clauses[i].num_literals = 0;
+            }
             continue;
         }
 
-        // Lire les clauses
-        for (int i = 0; i < F.num_clauses; i++) {
-            fgets(line, sizeof(line), f);
-            F.clauses[i].literals = (int *)malloc(3 * sizeof(int)); // Réserver de la place pour 3 littéraux au maximum
-            int j = 0;
+        if (F.num_clauses > 0 && F.clauses != NULL) {
+            int i = 0;
+            for (i = 0; i < F.num_clauses; i++) {
+                if (F.clauses[i].literals == NULL) break;
+            }
+            
+            int num_literals = 0;
             char *token = strtok(line, " ");
             while (token != NULL) {
                 if (strcmp(token, "0") == 0) break;
-                F.clauses[i].literals[j++] = atoi(token);
+                num_literals++;
                 token = strtok(NULL, " ");
             }
-            F.clauses[i].num_literals = j; // Mettre à jour le nombre réel de littéraux
+
+            F.clauses[i].literals = (int *)malloc(num_literals * sizeof(int));
+            F.clauses[i].num_literals = num_literals;
+
+            token = strtok(line, " ");
+            for (int j = 0; j < num_literals; j++) {
+                F.clauses[i].literals[j] = atoi(token);
+                token = strtok(NULL, " ");
+            }
         }
     }
 
@@ -86,89 +101,67 @@ bool verify_solution(Formula* formula, bool* assignment) {
     return true;
 }
 
-void print_clause(Clause* clause) {
-    printf("(");
-    for (int i = 0; i < clause->num_literals; i++) {
-        if (clause->literals[i] < 0) {
-            printf("¬x%d", abs(clause->literals[i]));
-        } else {
-            printf("x%d", clause->literals[i]);
-        }
-        if (i < clause->num_literals - 1) {
-            printf(" ∨ ");
-        }
+void generer_solution(int num_vars, bool* solution) {
+    for (int i = 0; i < num_vars; i++) {
+        solution[i] = rand() % 2;
     }
-    printf(")");
-}
-
-void print_formula(Formula* formula) {
-    printf("F = ");
-    for (int i = 0; i < formula->num_clauses; i++) {
-        print_clause(&formula->clauses[i]);
-        if (i < formula->num_clauses - 1) {
-            printf(" ∧ ");
-        }
-    }
-    printf("\n");
 }
 
 double complexite(int k, double t2, double t1) {
-    return (t2 - t1) / (CLOCKS_PER_SEC * k); // Calcul du temps d'exécution moyen
-}
-
-void generer_solution(int num_vars, bool* solution) {
-    for (int i = 0; i < num_vars; i++) {
-        solution[i] = rand() % 2;  
-    }
+    return (t2 - t1) / (CLOCKS_PER_SEC * k);
 }
 
 int main() {
-    srand(time(NULL));  // Initialisation du générateur aléatoire
+    srand(time(NULL));
     int k = 200;
-    DIR *d = opendir("Bejing");
+    DIR *d = opendir("QG");
     if (d == NULL) {
         printf("Erreur d'ouverture du dossier\n");
         return 1;
     }
 
     struct dirent *entry;
-    FILE *F = fopen("resultatSAT_ver_Sol.csv", "w");
+    FILE *F = fopen("resultatSAT2_ver_Sol.csv", "w");
 
     if (F == NULL) {
         printf("Erreur d'ouverture du fichier CSV\n");
         return 1;
     }
-    int i =0 ; 
     fprintf(F, "nbr_clauses,num_vars,num_literals,temps,memUsage\n");
 
     while ((entry = readdir(d)) != NULL) {
         if (entry->d_name[0] == '.') continue;
         
         char filepath[256];
-        snprintf(filepath, sizeof(filepath), "Bejing/%s", entry->d_name);
-        
-        // Allocation de la mémoire pour l'assignation des variables
-        Formula formula = lireCNF(filepath);
-        bool *assignment = (bool *)malloc(formula.num_vars * sizeof(bool)); // Allocation dynamique
+        snprintf(filepath, sizeof(filepath), "QG/%s", entry->d_name);
+        printf("Traitement du fichier : %s\n", filepath);
 
-        // Générer une solution aléatoire
+        Formula formula = lireCNF(filepath);
+        printf("Nombre de clauses: %d, Nombre de variables: %d\n", formula.num_clauses, formula.num_vars);
+        if (formula.num_clauses == 0 || formula.num_vars == 0) {
+            printf("Erreur: Fichier CNF vide ou incorrect : %s\n", filepath);
+            continue;
+        }
+
+        bool *assignment = (bool *)malloc(formula.num_vars * sizeof(bool));
+
         generer_solution(formula.num_vars, assignment);
 
         double t1 = clock();
         bool result = verify_solution(&formula, assignment);
         double t2 = clock(); 
-        double temps = complexite(k, t2, t1); // Calcul du temps d'exécution
-        
-        // Calcul de la mémoire utilisée
+        double temps = complexite(k, t2, t1);
+        printf("Temps d'exécution: %f\n", temps);
+
         size_t memoire = sizeof(formula) + formula.num_clauses * sizeof(Clause);
         for (int i = 0; i < formula.num_clauses; i++) {
             memoire += formula.clauses[i].num_literals * sizeof(int);
         }
+        printf("Mémoire utilisée: %zu\n", memoire);
         
-        // Enregistrement des résultats dans le fichier CSV
         fprintf(F, "%d,%d,%d,%f,%zu\n", formula.num_clauses, formula.num_vars, formula.clauses[0].num_literals, temps, memoire);
-        
-        // Libération de la mémoire allouée
+        fflush(F);
+
         for (int i = 0; i < formula.num_clauses; i++) {
             free(formula.clauses[i].literals);
         }
