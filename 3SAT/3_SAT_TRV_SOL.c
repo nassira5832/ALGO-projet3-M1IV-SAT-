@@ -89,6 +89,5 @@ int main() {
         fprintf(F,"%d,%f,%zu\n",start,temps , memoire);
         start=start+Step;
     } 
- 
     return 0;
 }

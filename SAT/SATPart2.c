@@ -101,7 +101,16 @@ void generer_solution(int num_vars, bool* solution) {
         solution[i] = rand() % 2;  
     }
 }
+size_t calculer_memoire_utilisee(Formula* formula) {
+    size_t memoire = sizeof(Formula); // Taille de la structure principale
+    memoire += formula->num_clauses * sizeof(Clause); // Taille des clauses
 
+    for (int i = 0; i < formula->num_clauses; i++) {
+        memoire += formula->clauses[i].num_literals * sizeof(int); // Taille des littéraux
+    }
+
+    return memoire;
+}
 int main() {
     srand(time(NULL)); 
 
@@ -110,9 +119,9 @@ int main() {
     int Step = 2000;
     int k =20000; 
 
-    FILE *F = fopen("resultatSAT_ver_Sol.csv", "w");
+    FILE *F = fopen("resultatSAT2_ver_Sol.csv", "w");
 
-    fprintf(F, "num_clauses,num_vars,num_literals,temps\n");
+    fprintf(F, "num_clauses,num_vars,num_literals,temps,memUsage\n");
 
     while (start < end) {
         int num_clauses = start;  
@@ -128,9 +137,9 @@ int main() {
 
         double t2 = clock(); 
         double temps = complexite(k, t2, t1); // Calcul du temps d'exécution
-
+        size_t mem = calculer_memoire_utilisee(&formula); 
         // Enregistrement des résultats dans le fichier CSV
-        fprintf(F, "%d,%d,%d,%f\n", num_clauses, formula.num_vars, formula.clauses->num_literals, temps);
+        fprintf(F, "%d,%d,%d,%f,%zu\n", num_clauses, formula.num_vars, formula.clauses->num_literals, temps,mem);
 
         // Libération de la mémoire allouée
         for (int i = 0; i < formula.num_clauses; i++) {

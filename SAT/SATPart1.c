@@ -129,7 +129,7 @@ int main() {
     int Step = 2;
     int k = 100;
 
-    FILE *F = fopen("resultatSAT2_trv_Sol.csv", "w");
+    FILE *F = fopen("resultatSAT_trv_Sol.csv", "w");
     fprintf(F, "nbr_clauses,num_vars,num_literals,temps,memUsage\n");
 
     while (start < end) {
